@@ -8,7 +8,8 @@ app.use(cors());
 
 const jwtPassword = "123";
 app.use(express.json());
-mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true })
+const mongoURI = process.env.MONGO_URI;
+mongoose.connect(mongoURI, {})
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("Error connecting to MongoDB:", err));
 
