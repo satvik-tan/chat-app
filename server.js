@@ -3,13 +3,15 @@ const app = express();
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
-
+require('dotenv').config();
 app.use(cors());
 
 const jwtPassword = "123";
 app.use(express.json());
+mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log("Connected to MongoDB"))
+  .catch((err) => console.error("Error connecting to MongoDB:", err));
 
-mongoose.connect("mongodb+srv://admin:orpitbala@cluster0.r1chf.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 
 const User = mongoose.model('Users', {username:String, password: String, name:String, message:[String]});
 
