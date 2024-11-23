@@ -65,7 +65,7 @@ async function signUp(){
           localStorage.setItem("jwtToken", data.token);
     
           // Redirect to chatbox
-          window.location.href = "chatApp/chatbox.html"; // Replace with your chatbox page URL
+          window.location.href = "chatbox.html"; // Replace with your chatbox page URL
         } else {
           console.error("Signup failed:", data.message);
           alert(data.message);
