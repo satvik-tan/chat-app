@@ -1,54 +1,61 @@
-```yaml
-name: Deploy Node App
+name: Deploy to Vercel
 
 on:
   push:
     branches:
-      - main  # Adjust to your main branch
+      - main  # Change this to your main branch
   pull_request:
     branches:
-      - main # Adjust to your main branch
+      - main  # Change this to your main branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [16.x, 18.x, 20.x]
-
     steps:
-      - uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Detect node version
+        id: detect-node-version
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version-file: '.nvmrc' # detect node version from .nvmrc or .node-version
+          cache: 'npm'  # Set cache to npm
 
-      - name: Install Dependencies
-        run: npm install
+      - name: Install dependencies
+        run: npm ci  # Use npm ci for clean installs with lockfile
 
-      - name: Run Tests
-        run: npm test
-
-      - name: Build
-        run: npm run build  # Adjust if your build script is different
+      - name: Build application
+        run: npm run build  # Replace with your build command if different (e.g., npm run build)
+        env:
+          CI: 'true' # Disable interactive prompts during build, important for CI
 
       - name: Deploy to Vercel
-        if: github.ref == 'refs/heads/main' && matrix.node-version == '20.x' # deploy only on main branch and only on the latest node version
-        uses: amondnet/vercel-action@v20
+        uses: vercel/vercel-action@v0.15.0
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }} # Required. Obtain from Vercel
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }} # Required. Obtain from Vercel
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }} # Required. Obtain from Vercel
-          github-comment: true
+          vercel-token: ${{ secrets.VERCEL_TOKEN }} # Vercel project token
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }} # Vercel org id
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }} # Vercel project id
           scope: ${{ secrets.VERCEL_ORG_ID }}
-          token: ${{ secrets.GITHUB_TOKEN }} # Optional. Defaults to github token
+          alias-domains: yourdomain.com,www.yourdomain.com #optional
+          working-directory: ./ #optional
 
-      # Alternative: Deploy to Render
-      # - name: Deploy to Render
-      #   if: github.ref == 'refs/heads/main' && matrix.node-version == '20.x'
-      #   uses: johnbeynon/render-deploy@v1
-      #   with:
-      #     service-id: ${{ secrets.RENDER_SERVICE_ID }} # Replace with your Render service ID
-      #     api-key: ${{ secrets.RENDER_API_KEY }}   # Replace with your Render API key
-      #     clearCache: true
-```
+      - name: Send Slack Notification on Failure
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: '#your-slack-channel' # Replace with your Slack channel
+          SLACK_COLOR: '#FF0000'  # Red for failure
+          SLACK_MESSAGE: 'Vercel deployment failed!'
+          SLACK_TITLE: 'Deployment Failure'
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }} # Replace with your Slack webhook URL
+
+      - name: Send Slack Notification on Success
+        if: success()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: '#your-slack-channel' # Replace with your Slack channel
+          SLACK_COLOR: '#00FF00'  # Green for success
+          SLACK_MESSAGE: 'Vercel deployment succeeded!'
+          SLACK_TITLE: 'Deployment Success'
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }} # Replace with your Slack webhook URL
